@@ -6,7 +6,6 @@
     <title>Secret Cloud</title>
     <script src="https://jsdelivr.net"></script>
     <style>
-        /* Центрируем окно пароля по середине экрана */
         html, body { height: 100%; margin: 0; padding: 0; }
         body { font-family: Arial, sans-serif; background: #121212; color: #fff; text-align: center; display: flex; align-items: center; justify-content: center; }
         
@@ -16,7 +15,6 @@
         button { background: #007bff; color: white; cursor: pointer; font-weight: bold; }
         button:hover { background: #0056b3; }
         
-        /* Стили для панели после входа */
         #app { display: none; margin: 20px; }
         .hidden { display: none !important; }
         .media-container { margin-top: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
@@ -25,7 +23,7 @@
 </head>
 <body>
 
-    <!-- Форма входа (Автоматически встанет по центру экрана) -->
+    <!-- Форма входа -->
     <div id="login-box" class="box">
         <h2>Доступ ограничен</h2>
         <input type="password" id="password-input" placeholder="Введите секретный пароль">
@@ -33,7 +31,7 @@
         <p id="error-msg" style="color: red; display: none;">Неверный пароль!</p>
     </div>
 
-    <!-- Основной интерфейс (Появится после ввода пароля) -->
+    <!-- Основной интерфейс -->
     <div id="app" class="box">
         <h2>Моё Секретное Облако</h2>
         <input type="file" id="file-uploader" accept="image/*,video/*">
@@ -45,20 +43,18 @@
 
     <script>
         const SUPABASE_URL = "https://supabase.co";
-        // 1) Твой ключ теперь автоматически прописан здесь:
         const SUPABASE_KEY = "sb_publishable_CCejFdbTq0ye2ljTCeajDg_qFFpq4_X";
         const BUCKET_NAME = "my-media";
         
-        // 2) Впиши сюда свой секретный пароль для входа на сайт:
-        const SECRET_PASSWORD = "apel"; 
-        
+        // ВПИШИ СВОЙ ПАРОЛЬ В КАВЫЧКИ НИЖЕ:
+        const SECRET_PASSWORD = "vlad"; 
+
         const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         function checkPassword() {
             const input = document.getElementById('password-input').value;
             if (input === SECRET_PASSWORD) {
                 document.getElementById('login-box').classList.add('hidden');
-                // Меняем стиль body, чтобы после входа контент шел сверху вниз, а не оставался по центру
                 document.body.style.display = 'block'; 
                 document.getElementById('app').style.display = 'block';
                 loadGallery();
@@ -72,16 +68,23 @@
             const status = document.getElementById('upload-status');
             if (!fileInput.files.length) return alert('Выберите файл!');
 
-            const file = fileInput.files[0];
+            // ВОТ ТУТ БЫЛА ОШИБКА! Теперь мы берем именно ОДИН файл из списка:
+            const file = fileInput.files[0]; 
             status.innerText = "Загрузка...";
+            
+            // Создаем уникальное имя файла
             const fileName = Date.now() + "_" + file.name;
 
             try {
                 const { data, error } = await supabase.storage
                     .from(BUCKET_NAME)
-                    .upload(fileName, file, { contentType: file.type });
+                    .upload(fileName, file, { 
+                        contentType: file.type,
+                        upsert: true 
+                    });
 
                 if (error) {
+                    console.error("Ошибка Supabase:", error);
                     status.innerText = "Ошибка: " + error.message;
                 } else {
                     status.innerText = "Успешно загружено!";
@@ -89,6 +92,7 @@
                     saveToLocalStorage(fileName, file.type);
                 }
             } catch (err) {
+                console.error("Сетевая ошибка:", err);
                 status.innerText = "Ошибка сети.";
             }
         }
