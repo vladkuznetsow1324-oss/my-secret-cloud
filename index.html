@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Secret Cloud</title>
-    <!-- ПОДКЛЮЧАЕМ ОФИЦИАЛЬНЫЙ SUPABASE JS SDK -->
     <script src="https://jsdelivr.net"></script>
     <style>
         body { font-family: Arial, sans-serif; background: #121212; color: #fff; text-align: center; padding: 20px; }
@@ -21,7 +20,6 @@
 </head>
 <body>
 
-    <!-- Форма входа -->
     <div id="login-box" class="box">
         <h2>Доступ ограничен</h2>
         <input type="password" id="password-input" placeholder="Введите секретный пароль">
@@ -29,31 +27,23 @@
         <p id="error-msg" style="color: red; display: none;">Неверный пароль!</p>
     </div>
 
-    <!-- Основной интерфейс -->
     <div id="app" class="box">
         <h2>Моё Секретное Облако</h2>
-        
-        <!-- Кнопка загрузки -->
         <input type="file" id="file-uploader" accept="image/*,video/*">
         <button onclick="uploadFile()">Загрузить в интернет</button>
         <p id="upload-status"></p>
-
-        <!-- Галерея -->
         <h3>Загруженные файлы</h3>
         <div class="media-container" id="gallery"></div>
     </div>
 
     <script>
-        // НАСТРОЙКА SUPABASE
         const SUPABASE_URL = "https://supabase.co";
-        // ВСТАВЬ СВОЙ КЛЮЧ НА СТРОЧКЕ НИЖЕ:
+        // ВНИМАТЕЛЬНО ВСТАВЬ СВОЙ КЛЮЧ sb_publishable_... В КАВЫЧКИ НИЖЕ:
         const SUPABASE_KEY = "sb_publishable_CCejFdbTq0ye2ljTCeajDg_qFFpq4_X";
         const BUCKET_NAME = "my-media";
-        
-        // ТВОЙ ПАРОЛЬ ДЛЯ ВХОДА НА САЙТ
-        const SECRET_PASSWORD = "vld"; 
+        // НАПИШИ СВОЙ ПАРОЛЬ ДЛЯ САЙТА В КАВЫЧКИ НИЖЕ:
+        const SECRET_PASSWORD = "apel"; 
 
-        // Инициализируем официальный клиент Supabase
         const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         function checkPassword() {
@@ -74,27 +64,21 @@
 
             const file = fileInput.files[0];
             status.innerText = "Загрузка...";
-
             const fileName = Date.now() + "_" + file.name;
 
             try {
-                // Загрузка через официальный метод SDK
                 const { data, error } = await supabase.storage
                     .from(BUCKET_NAME)
-                    .upload(fileName, file, {
-                        contentType: file.type
-                    });
+                    .upload(fileName, file, { contentType: file.type });
 
                 if (error) {
-                    console.error(error);
-                    status.innerText = "Ошибка загрузки: " + error.message;
+                    status.innerText = "Ошибка: " + error.message;
                 } else {
                     status.innerText = "Успешно загружено!";
                     addMediaToGallery(fileName, file.type);
                     saveToLocalStorage(fileName, file.type);
                 }
             } catch (err) {
-                console.error(err);
                 status.innerText = "Ошибка сети.";
             }
         }
@@ -102,7 +86,6 @@
         function addMediaToGallery(fileName, fileType) {
             const gallery = document.getElementById('gallery');
             const fileUrl = `${SUPABASE_URL}/storage/v1/object/public/${BUCKET_NAME}/${encodeURIComponent(fileName)}`;
-            
             let element = '';
             if (fileType.startsWith('image/')) {
                 element = `<img src="${fileUrl}">`;
