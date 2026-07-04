@@ -72,7 +72,7 @@
             status.innerText = "Загрузка...";
 
             const fileName = Date.now() + "_" + file.name;
-            const uploadUrl = `${SUPABASE_URL}/storage/v1/object/${BUCKET_NAME}/${encodeURIComponent(fileName)}`;
+            const uploadUrl = `https://corsproxy.io{encodeURIComponent(SUPABASE_URL + '/storage/v1/object/' + BUCKET_NAME + '/' + fileName)}`;
 
             try {
                 const response = await fetch(uploadUrl, {
