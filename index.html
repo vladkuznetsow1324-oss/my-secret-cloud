@@ -42,13 +42,14 @@
     </div>
 
     <script>
-        // НАСТРОЙКА SUPABASE (Твой URL я уже прописал сам)
+        // НАСТРОЙКА SUPABASE
         const SUPABASE_URL = "https://supabase.co";
+        // ВСТАВЬ СЮДА СВОЙ КЛЮЧ sb_publishable_... НА СТРОЧКЕ НИЖЕ:
         const SUPABASE_KEY = "sb_publishable_CCejFdbTq0ye2ljTCeajDg_qFFpq4_X";
         const BUCKET_NAME = "my-media";
         
         // ТВОЙ ПАРОЛЬ ДЛЯ ВХОДА НА САЙТ
-        const SECRET_PASSWORD = "vladik1234321s#V"; 
+        const SECRET_PASSWORD = "vlad"; 
 
         function checkPassword() {
             const input = document.getElementById('password-input').value;
@@ -66,10 +67,10 @@
             const status = document.getElementById('upload-status');
             if (!fileInput.files.length) return alert('Выберите файл!');
 
+            // ВОТ ТУТ БЫЛА ОШИБКА: теперь берем конкретный первый файл
             const file = fileInput.files[0];
             status.innerText = "Загрузка...";
 
-            // Создаем уникальное имя файла, чтобы они не перезаписывались
             const fileName = Date.now() + "_" + file.name;
             const uploadUrl = `${SUPABASE_URL}/storage/v1/object/${BUCKET_NAME}/${encodeURIComponent(fileName)}`;
 
@@ -81,7 +82,7 @@
                         'apikey': SUPABASE_KEY,
                         'Content-Type': file.type
                     },
-                    body: file
+                    body: file // Передаем сам файл, а не список файлов
                 });
 
                 if (response.ok) {
