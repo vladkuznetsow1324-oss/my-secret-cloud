@@ -6,13 +6,18 @@
     <title>Secret Cloud</title>
     <script src="https://jsdelivr.net"></script>
     <style>
-        body { font-family: Arial, sans-serif; background: #121212; color: #fff; text-align: center; padding: 20px; }
-        .box { max-width: 500px; margin: 50px auto; background: #1e1e1e; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        /* Центрируем окно пароля по середине экрана */
+        html, body { height: 100%; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; background: #121212; color: #fff; text-align: center; display: flex; align-items: center; justify-content: center; }
+        
+        .box { width: 100%; max-width: 500px; background: #1e1e1e; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); box-sizing: border-box; }
         input, button { width: 100%; padding: 12px; margin: 10px 0; border-radius: 5px; border: none; box-sizing: border-box; }
         input { background: #333; color: #fff; }
         button { background: #007bff; color: white; cursor: pointer; font-weight: bold; }
         button:hover { background: #0056b3; }
-        #app { display: none; }
+        
+        /* Стили для панели после входа */
+        #app { display: none; margin: 20px; }
         .hidden { display: none !important; }
         .media-container { margin-top: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         img, video { width: 100%; border-radius: 8px; background: #000; }
@@ -20,6 +25,7 @@
 </head>
 <body>
 
+    <!-- Форма входа (Автоматически встанет по центру экрана) -->
     <div id="login-box" class="box">
         <h2>Доступ ограничен</h2>
         <input type="password" id="password-input" placeholder="Введите секретный пароль">
@@ -27,6 +33,7 @@
         <p id="error-msg" style="color: red; display: none;">Неверный пароль!</p>
     </div>
 
+    <!-- Основной интерфейс (Появится после ввода пароля) -->
     <div id="app" class="box">
         <h2>Моё Секретное Облако</h2>
         <input type="file" id="file-uploader" accept="image/*,video/*">
@@ -38,10 +45,11 @@
 
     <script>
         const SUPABASE_URL = "https://supabase.co";
-        // ВНИМАТЕЛЬНО ВСТАВЬ СВОЙ КЛЮЧ sb_publishable_... В КАВЫЧКИ НИЖЕ:
+        // 1) Твой ключ теперь автоматически прописан здесь:
         const SUPABASE_KEY = "sb_publishable_CCejFdbTq0ye2ljTCeajDg_qFFpq4_X";
         const BUCKET_NAME = "my-media";
-        // НАПИШИ СВОЙ ПАРОЛЬ ДЛЯ САЙТА В КАВЫЧКИ НИЖЕ:
+        
+        // 2) Впиши сюда свой секретный пароль для входа на сайт:
         const SECRET_PASSWORD = "apel"; 
 
         const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -50,6 +58,8 @@
             const input = document.getElementById('password-input').value;
             if (input === SECRET_PASSWORD) {
                 document.getElementById('login-box').classList.add('hidden');
+                // Меняем стиль body, чтобы после входа контент шел сверху вниз, а не оставался по центру
+                document.body.style.display = 'block'; 
                 document.getElementById('app').style.display = 'block';
                 loadGallery();
             } else {
