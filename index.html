@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Secret Cloud</title>
+    <!-- ПОДКЛЮЧАЕМ ОФИЦИАЛЬНЫЙ SUPABASE JS SDK -->
+    <script src="https://jsdelivr.net"></script>
     <style>
         body { font-family: Arial, sans-serif; background: #121212; color: #fff; text-align: center; padding: 20px; }
         .box { max-width: 500px; margin: 50px auto; background: #1e1e1e; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
@@ -44,12 +46,15 @@
     <script>
         // НАСТРОЙКА SUPABASE
         const SUPABASE_URL = "https://supabase.co";
-        // ВСТАВЬ СЮДА СВОЙ КЛЮЧ sb_publishable_... НА СТРОЧКЕ НИЖЕ:
+        // ВСТАВЬ СВОЙ КЛЮЧ НА СТРОЧКЕ НИЖЕ:
         const SUPABASE_KEY = "sb_publishable_CCejFdbTq0ye2ljTCeajDg_qFFpq4_X";
         const BUCKET_NAME = "my-media";
         
         // ТВОЙ ПАРОЛЬ ДЛЯ ВХОДА НА САЙТ
-        const SECRET_PASSWORD = "vlad"; 
+        const SECRET_PASSWORD = "vld"; 
+
+        // Инициализируем официальный клиент Supabase
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         function checkPassword() {
             const input = document.getElementById('password-input').value;
@@ -67,32 +72,26 @@
             const status = document.getElementById('upload-status');
             if (!fileInput.files.length) return alert('Выберите файл!');
 
-            // ВОТ ТУТ БЫЛА ОШИБКА: теперь берем конкретный первый файл
             const file = fileInput.files[0];
             status.innerText = "Загрузка...";
 
             const fileName = Date.now() + "_" + file.name;
-            const uploadUrl = `https://corsproxy.io{encodeURIComponent(SUPABASE_URL + '/storage/v1/object/' + BUCKET_NAME + '/' + fileName)}`;
 
             try {
-                const response = await fetch(uploadUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${SUPABASE_KEY}`,
-                        'apikey': SUPABASE_KEY,
-                        'Content-Type': file.type
-                    },
-                    body: file // Передаем сам файл, а не список файлов
-                });
+                // Загрузка через официальный метод SDK
+                const { data, error } = await supabase.storage
+                    .from(BUCKET_NAME)
+                    .upload(fileName, file, {
+                        contentType: file.type
+                    });
 
-                if (response.ok) {
+                if (error) {
+                    console.error(error);
+                    status.innerText = "Ошибка загрузки: " + error.message;
+                } else {
                     status.innerText = "Успешно загружено!";
                     addMediaToGallery(fileName, file.type);
                     saveToLocalStorage(fileName, file.type);
-                } else {
-                    const errData = await response.json();
-                    console.error(errData);
-                    status.innerText = "Ошибка загрузки: " + (errData.message || response.statusText);
                 }
             } catch (err) {
                 console.error(err);
