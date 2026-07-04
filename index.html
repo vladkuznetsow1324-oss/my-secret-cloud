@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secret Cloud</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #121212; color: #fff; text-align: center; padding: 20px; }
+        .box { max-width: 500px; margin: 50px auto; background: #1e1e1e; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        input, button { width: 100%; padding: 12px; margin: 10px 0; border-radius: 5px; border: none; box-sizing: border-box; }
+        input { background: #333; color: #fff; }
+        button { background: #007bff; color: white; cursor: pointer; font-weight: bold; }
+        button:hover { background: #0056b3; }
+        #app { display: none; }
+        .hidden { display: none !important; }
+        .media-container { margin-top: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        img, video { width: 100%; border-radius: 8px; background: #000; }
+    </style>
+</head>
+<body>
+
+    <!-- Форма входа -->
+    <div id="login-box" class="box">
+        <h2>Доступ ограничен</h2>
+        <input type="password" id="password-input" placeholder="Введите секретный пароль">
+        <button onclick="checkPassword()">Войти</button>
+        <p id="error-msg" style="color: red; display: none;">Неверный пароль!</p>
+    </div>
+
+    <!-- Основной интерфейс (скрыт до ввода пароля) -->
+    <div id="app" class="box">
+        <h2>Моё Секретное Облако</h2>
+        
+        <!-- Кнопка загрузки -->
+        <input type="file" id="file-uploader" accept="image/*,video/*">
+        <button onclick="uploadFile()">Загрузить в интернет</button>
+        <p id="upload-status"></p>
+
+        <!-- Галерея загруженных файлов -->
+        <h3>Загруженные файлы</h3>
+        <div class="media-container" id="gallery">
+            <!-- Сюда будут добавляться файлы -->
+        </div>
+    </div>
+
+    <script>
+        // НАСТРОЙКА КЛЮЧЕЙ (Эти три строчки пока не трогай)
+        const B2_BUCKET_NAME = "ИМЯ_ВАШЕГО_БАКЕТА";
+        const B2_APPLICATION_KEY_ID = "ВАШ_KEY_ID";
+        const B2_APPLICATION_KEY = "ВАШ_APPLICATION_KEY";
+        
+        // ТВОЙ ПАРОЛЬ ДЛЯ ВХОДА НА САЙТ (Поменяй текст в кавычках)
+        const SECRET_PASSWORD = "vladik1234321s"; 
+
+        function checkPassword() {
+            const input = document.getElementById('password-input').value;
+            if (input === SECRET_PASSWORD) {
+                document.getElementById('login-box').classList.add('hidden');
+                document.getElementById('app').style.display = 'block';
+                loadGallery();
+            } else {
+                document.getElementById('error-msg').style.display = 'block';
+            }
+        }
+
+        async function uploadFile() {
+            const fileInput = document.getElementById('file-uploader');
+            const status = document.getElementById('upload-status');
+            if (!fileInput.files.length) return alert('Выберите файл!');
+
+            const file = fileInput.files[0];
+            status.innerText = "Загрузка...";
+
+            try {
+                const authCode = btoa(`${B2_APPLICATION_KEY_ID}:${B2_APPLICATION_KEY}`);
+                const authRes = await fetch('https://backblazeb2.com', {
+                    headers: { 'Authorization': `Basic ${authCode}` }
+                });
+                const authData = await authRes.json();
+
+                const uploadUrlRes = await fetch(`${authData.apiUrl}/b2api/v2/b2_get_upload_url`, {
+                    method: 'POST',
+                    headers: { 'Authorization': authData.authorizationToken },
+                    body: JSON.stringify({ bucketId: authData.allowed.bucketId })
+                });
+                const uploadUrlData = await uploadUrlRes.json();
+
+                const arrayBuffer = await file.arrayBuffer();
+                const uploadRes = await fetch(uploadUrlData.uploadUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': uploadUrlData.authorizationToken,
+                        'X-Bz-File-Name': encodeURIComponent(file.name),
+                        'Content-Type': file.type,
+                        'X-Bz-Content-Sha1': 'do_not_verify'
+                    },
+                    body: arrayBuffer
+                });
+
+                if (uploadRes.ok) {
+                    status.innerText = "Успешно загружено!";
+                    addMediaToGallery(file.name, file.type);
+                    saveToLocalStorage(file.name, file.type);
+                } else {
+                    status.innerText = "Ошибка загрузки.";
+                }
+            } catch (err) {
+                console.error(err);
+                status.innerText = "Ошибка сети.";
+            }
+        }
+
+        function addMediaToGallery(fileName, fileType) {
+            const gallery = document.getElementById('gallery');
+            const fileUrl = `https://backblazeb2.com{B2_BUCKET_NAME}/${encodeURIComponent(fileName)}`;
+            
+            let element = '';
+            if (fileType.startsWith('image/')) {
+                element = `<img src="${fileUrl}">`;
+            } else if (fileType.startsWith('video/')) {
+                element = `<video src="${fileUrl}" controls></video>`;
+            }
+            if (element) gallery.innerHTML = element + gallery.innerHTML;
+        }
+
+        function saveToLocalStorage(name, type) {
+            let list = JSON.parse(localStorage.getItem('my_cloud_files')) || [];
+            list.push({name, type});
+            localStorage.setItem('my_cloud_files', JSON.stringify(list));
+        }
+
+        function loadGallery() {
+            let list = JSON.parse(localStorage.getItem('my_cloud_files')) || [];
+            list.forEach(file => addMediaToGallery(file.name, file.type));
+        }
+    </script>
+</body>
+</html>
